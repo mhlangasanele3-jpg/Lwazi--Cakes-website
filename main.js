@@ -1,4 +1,4 @@
-const GOOGLE_MAPS_API_KEY = "";
+const GOOGLE_MAPS_API_KEY = "AIzaSyDaep5_2e1H7xTDAMphhtWSnnLZi5JBL1E";
 
 async function initMap() {
   const location = { lat: -25.3250826, lng: 31.0197776 };
