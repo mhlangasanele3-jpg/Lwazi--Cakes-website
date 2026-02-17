@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Your Cake - CakeDelight</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="Stylesheet" href="style.css">
+</head>   
+<body>
+
+<header>
+  <div class="logo">CakeDelight</div>
+    <nav>
+      <a href="home1.html">Home</a>
+      <a href="order - Copy.html">Order</a>
+      <a href="about us.html">About Us</a>     
+    </nav>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h1>Order Your Perfect Cake</h1>
+    <p style="text-align:center; margin-bottom:40px; color:#666;">
+      Price depends on <strong>size</strong> and <strong>style</strong> — Premium Exclusive & Love Box have higher base rates due to extra decoration & time
+    </p>
+
+    <form id="orderForm">
+
+      <!-- Your existing form fields (name, email, phone, etc.) remain the same -->
+
+      <div class="form-row">
+        <div><label>Full Name *</label><input type="text" id="name" required></div>
+        <div><label>Email *</label><input type="email" id="email" required></div>
+      </div>
+
+      <div class="form-row">
+        <div><label>Phone Number *</label><input type="tel" id="phone" pattern="[0-9]{10}" placeholder="e.g. 0795005677" required></div>
+        <div><label>Delivery Date *</label><input type="date" id="delivery-date" required></div>
+      </div>
+
+      <label>Delivery Address *</label>
+      <input type="text" id="delivery-address" placeholder="123 Sweet Street, Cape Town" required>
+
+      <div class="section-title">Step 1: Choose Cake Size</div>
+      <label>Cake Size *</label>
+      <select id="cake-size" required>
+        <option disabled selected>Select size</option>
+        <option value="small">Small (4-6 people)</option>
+        <option value="medium">Medium (8-10 people)</option>
+        <option value="large">Large (12-16 people)</option>
+      </select>
+
+      <div class="section-title">Step 2: Choose Cake Style</div>
+      <label>Cake Style *</label>
+      <select id="cake-style" required>
+        <option disabled selected>Select style</option>
+        <option value="premium">Premium Exclusive (fancy & decorated)</option>
+        <option value="lovebox">Love Box Gift</option>
+        <option value="platterbox">Platter Box</option>
+        <option value="classic">Classic & Simple (minimalist)</option>
+      </select>
+
+      <!-- Rest of your form (flavor, shape, tiers, cupcakes, frosting, message, photo) stays the same -->
+
+      <div class="section-title">Step 3: Choose Flavor</div>
+      <label>Flavor *</label>
+      <select id="cake-flavor" required >
+        <option value="">First select a style above</option>
+      </select>
+
+      <div class="form-row">
+        <div>
+          <label>Shape *</label>
+          <select id="cake-shape" required>
+            <option disabled selected>Select shape</option>
+            <option value="Round">Round</option>
+            <option value="Heart">Heart</option>
+            <option value="Rectangle">Rectangle</option>
+          </select>
+        </div>
+        <div id="tier-section" style="display:none;">
+          <label>Number of Tiers (Round only)</label>
+          <select id="cake-tiers">
+            <option value="1">1 Tier</option>
+            <option value="2">2 Tiers (+R350)</option>
+            <option value="3">3 Tiers (+R550)</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Cupcake Treat (Optional)</label>
+      <select id="cupcake-add">
+        <option value="0">No cupcakes</option>
+        <option value="6">+6 Cupcakes (+R35)</option>
+        <option value="12">+12 Cupcakes (+R65)</option>
+        <option value="24">+24 Cupcakes (+R120)</option>
+      </select>
+
+      <label style="display:flex; align-items:center; gap:10px; margin-top:20px;">
+        <input type="checkbox" id="extra-frosting"> Extra Frosting (+R80)
+      </label>
+
+      <label>Message on Cake / Special Requests</label>
+      <textarea id="custom-message" rows="4" placeholder="e.g. Happy Birthday Sarah! Add roses and sprinkles"></textarea>
+
+      <label>Reference Photo (Optional)</label>
+      <input type="file" id="image" accept="image/*">
+      <img id="image-preview" alt="Preview of your reference photo">
+
+      <div class="total" id="total-display">Total: R0</div>
+
+      <button type="submit" class="btn">Place Order</button>
+    </form>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────────────────────────────────────
+//  UPDATED PRICING - Different base prices per STYLE + SIZE
+// ──────────────────────────────────────────────────────────────────────────────
+const prices = {
+  classic:  { small: 400,  medium: 600,  large: 800  },
+  premium:  { small: 720,  medium: 980,  large: 1280 },   // Premium is noticeably more expensive
+  lovebox:  { small: 180,  medium: 480},    // Love Box in between
+  platterbox: {large: 1380}
+};
+
+const tierPrices = { 1: 0, 2: 350, 3: 550 };
+const cupcakePrices = { 0: 0, 6: 35, 12: 65, 24: 120 };
+const extraFrostingPrice = 80;
+
+// Flavors by style (unchanged)
+const flavors = {
+  premium: [
+    "Sweetheart", "Blackforest", "Chocolate Dream", 
+    "Vanilla Bliss", "Red Velvet", "Lemon Zest"
+  ],
+  lovebox: ["Love Box Variety"],
+  platterbox: ["PlatterBox"],
+  classic: [
+    "Classic Vanilla", "Simple Chocolate", 
+    "Plain Red Velvet", "Elegant White Tiered"
+  ]
+};
+
+function updateTotal() {
+  const size = document.getElementById('cake-size').value;
+  const style = document.getElementById('cake-style').value;
+
+  let base = 0;
+  if (style && size && prices[style]) {
+    base = prices[style][size] || 0;
+  }
+
+  const shape = document.getElementById('cake-shape').value || "Round";
+  const tiers = (shape === "Round") ? parseInt(document.getElementById('cake-tiers').value || 1) : 1;
+  const cupcakes = parseInt(document.getElementById('cupcake-add').value || 0);
+  const frosting = document.getElementById('extra-frosting').checked ? extraFrostingPrice : 0;
+
+  const total = base + tierPrices[tiers] + cupcakePrices[cupcakes] + frosting;
+
+  document.getElementById('total-display').textContent = `Total: R${total}`;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+//  Rest of your script remains almost identical
+// ──────────────────────────────────────────────────────────────────────────────
+
+// Populate flavors when style changes
+document.getElementById('cake-style').addEventListener('change', function() {
+  const style = this.value;
+  const flavorSelect = document.getElementById('cake-flavor');
+  flavorSelect.innerHTML = '<option disabled selected>Select flavor</option>';
+  flavorSelect.disabled = !style;
+
+  if (style && flavors[style]) {
+    flavors[style].forEach(flavor => {
+      const option = document.createElement('option');
+      option.value = flavor;
+      option.textContent = flavor;
+      flavorSelect.appendChild(option);
+    });
+  }
+  flavorSelect.required = !!style;
+  updateTotal(); // Update price when style changes
+});
+
+// Show/hide tiers
+document.getElementById('cake-shape').addEventListener('change', function() {
+  document.getElementById('tier-section').style.display = this.value === "Round" ? "block" : "none";
+  updateTotal();
+});
+
+// Image preview
+document.getElementById('image').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const img = document.getElementById('image-preview');
+      img.src = ev.target.result;
+      img.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    document.getElementById('image-preview').style.display = 'none';
+  }
+});
+
+// Update total on relevant changes
+['cake-size', 'cake-style', 'cake-tiers', 'cupcake-add', 'extra-frosting', 'cake-shape']
+  .forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', updateTotal);
+  });
+
+// Initial update
+updateTotal();
+
+// Form submission (unchanged except total calculation uses new base)
+document.getElementById('orderForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+ if (!document.getElementById('cake-flavor').value) {
+    alert('Please select a flavor.');
+    return;
+  }
+
+  const size = document.getElementById('cake-size').value;
+  const style = document.getElementById('cake-style').value;
+  const shape = document.getElementById('cake-shape').value;
+  const tiers = (shape === "Round") ? document.getElementById('cake-tiers').value : "1";
+
+  const base = prices[style]?.[size] || 0;
+  const total = 
+    base +
+    tierPrices[tiers] +
+    cupcakePrices[document.getElementById('cupcake-add').value] +
+    (document.getElementById('extra-frosting').checked ? extraFrostingPrice : 0);
+
+  // Build order object and store in sessionStorage (avoids extremely long query strings)
+  const orderNumber = 'CD' + Date.now().toString().slice(-6);
+
+  // collect fields
+  const orderObj = {
+    order_number: orderNumber,
+    name: document.getElementById('name').value || '',
+    email: document.getElementById('email').value || '',
+    phone: document.getElementById('phone').value || '',
+    cake_style: style || '',
+    cake_flavor: document.getElementById('cake-flavor').value || '',
+    cake_size: size || '',
+    cake_shape: shape || '',
+    cake_tiers: tiers || '1',
+    custom_message: document.getElementById('custom-message').value || '',
+    extra_frosting: document.getElementById('extra-frosting').checked ? 'Yes' : 'No',
+    cupcakes: document.getElementById('cupcake-add').value || '0',
+    cupcake_price: (document.getElementById('cupcake-add').value && {
+      '6':35,'12':65,'24':120
+    }[document.getElementById('cupcake-add').value]) || 0,
+    delivery_date: document.getElementById('delivery-date').value || '',
+    delivery_address: document.getElementById('delivery-address').value || '',
+    total: 'R' + total,
+    image_base64: ''
+  };
+
+  // If a file was selected, try to read it as base64 and then continue; otherwise store and redirect immediately.
+  const fileInput = document.getElementById('image');
+  const file = fileInput && fileInput.files && fileInput.files[0];
+
+  function storeAndRedirect() {
+    try {
+      sessionStorage.setItem('lastOrder', JSON.stringify(orderObj));
+    } catch (err) {
+      console.warn('sessionStorage unavailable or quota exceeded', err);
+      // fallback: include only minimal params in URL
+      const params = new URLSearchParams();
+      params.set('order_number', orderObj.order_number);
+      params.set('total', orderObj.total);
+      window.location.href = 'confem.html?' + params.toString();
+      return;
+    }
+
+    // redirect with minimal params (order page will read full data from sessionStorage)
+    const params = new URLSearchParams();
+    params.set('order_number', orderObj.order_number);
+    params.set('total', orderObj.total);
+    window.location.href = 'confem.html?' + params.toString();
+  }
+
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      orderObj.image_base64 = ev.target.result;
+      storeAndRedirect();
+    };
+    reader.onerror = function() {
+      console.warn('Failed to read image file');
+      storeAndRedirect();
+    };
+    reader.readAsDataURL(file);
+  } else {
+    storeAndRedirect();
+  }
+});
+
+// Min delivery date (unchanged)
+const today = new Date();
+today.setDate(today.getDate() + 2);
+document.getElementById('delivery-date').min = today.toISOString().split('T')[0];
+</script>
+
+</body>
+</html>

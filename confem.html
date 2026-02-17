@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmed | CakeDelight</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Roboto',sans-serif;background:linear-gradient(to bottom,#fffaf8,#fff5f0);color:#333;min-height:100vh}
+    header{background:#fff;padding:20px 5%;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 15px rgba(0,0,0,0.1);position:sticky;top:0;z-index:100}
+    .logo{font-size:1.8rem;font-weight:bold;color:#f15a29}
+    nav a{margin:0 15px;color:#333;text-decoration:none;font-weight:500;transition:color .3s}
+    nav a:hover{color:#f15a29}
+    .card{max-width:720px;margin:40px auto;background:#fff;padding:40px;border-radius:20px;box-shadow:0 10px 30px rgba(241,90,41,0.15);text-align:center}
+    h1{color:#f15a29;font-size:2.7rem;margin-bottom:10px}
+    h1 small{display:block;font-size:1.2rem;color:#666;margin-top:8px}
+    .detail-row{margin:14px 0;font-size:1.15rem;display:flex;justify-content:space-between;padding:0 15px}
+    .detail-row span:first-child{font-weight:bold;color:#f15a29}
+    .image-preview{max-width:100%;border-radius:16px;margin:30px 0;box-shadow:0 6px 20px rgba(0,0,0,0.1);border:4px solid #f15a29}
+    .btn{display:block;width:290px;margin:30px auto 0;padding:18px;background:#25D366;color:#fff;border:none;border-radius:50px;font-size:1.25rem;cursor:pointer;text-decoration:none;box-shadow:0 6px 20px rgba(37,211,102,0.3);transition:all .3s}
+    .btn:hover{background:#1ebe5d;transform:translateY(-3px)}
+    .back-btn{display:block;width:250px;margin:15px auto 0;padding:15px;background:#f15a29;color:#fff;border-radius:50px;text-decoration:none;font-size:1.1rem;box-shadow:0 6px 20px rgba(241,90,41,0.3)}
+    .back-btn:hover{background:#e04a1e}
+    hr{margin:30px 0;border:none;border-top:2px dashed #f15a29;opacity:0.3}
+    .status{margin:20px 0;font-size:1.1rem;color:#2e7d32;font-weight:600}
+    @media(max-width:768px){
+      header{flex-direction:column;gap:15px}
+      h1{font-size:2.3rem}
+      .card{padding:30px 20px}
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">CakeDelight</div>
+    <nav>
+      <a href="home1.html">Home</a>
+      <a href="order.html">Order</a>
+      <a href="about us.html">About Us</a> 
+    </nav>
+  </header>
+
+  <div class="card">
+    <h1>Order Confirmed<br><small>We'll bake it with love 🍰</small></h1>
+    <p class="status" id="email-status">Sending your confirmation email...</p>
+
+    <div id="details" style="text-align:left;margin-top:20px;"></div>
+
+    <!-- WhatsApp Button -->
+    <button class="btn" onclick="sendToWhatsApp()">Send Order to WhatsApp</button>
+
+    <a href="order.html" class="back-btn">Place Another Order</a>
+  </div>
+
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    (function(){ emailjs.init("gNzLDXZDyoevBEz0r"); })();
+
+    function getParam(key) {
+      return new URLSearchParams(window.location.search).get(key) || "—";
+    }
+
+    // Try to read the full order from sessionStorage first (avoids URL length issues on Safari/iOS)
+    let data = null;
+    try {
+      const stored = sessionStorage.getItem('lastOrder');
+      if (stored) {
+        data = JSON.parse(stored);
+        // ensure defaults for missing fields
+        data.order_number = data.order_number || getParam('order_number') || '—';
+        data.total = data.total || getParam('total') || '—';
+      }
+    } catch (err) {
+      console.warn('Failed to read sessionStorage', err);
+    }
+
+    if (!data) {
+      data = {
+        order_number: getParam("order_number"),
+        name: getParam("name"),
+        email: getParam("email"),
+        phone: getParam("phone"),
+        cake_style: getParam("cake_style"),
+        cake_flavor: getParam("cake_flavor"),
+        cake_size: getParam("cake_size"),
+        cake_shape: getParam("cake_shape"),
+        cake_tiers: getParam("cake_tiers") || "1",
+        custom_message: getParam("custom_message") || "None",
+        extra_frosting: getParam("extra_frosting") || "No",
+        cupcakes: getParam("cupcakes") || "0",
+        cupcake_price: getParam("cupcake_price") || "0",
+        delivery_date: getParam("delivery_date"),
+        delivery_address: getParam("delivery_address"),
+        total: getParam("total"),
+        image_base64: getParam("image_base64")
+      };
+    } else {
+      // Clear stored order so it doesn't persist unexpectedly
+      try { sessionStorage.removeItem('lastOrder'); } catch (e) {}
+    }
+
+    // Format delivery date nicely
+    const niceDate = data.delivery_date !== "—" 
+      ? new Date(data.delivery_date).toLocaleDateString('en-ZA', {weekday:'long', year:'numeric', month:'long', day:'numeric'})
+      : "—";
+
+    // Clean cupcakes text (e.g. "No cupcakes" or "+12 Cupcakes (+R65)" → "12")
+    const cupcakeCount = data.cupcakes.includes("No") ? "None" : data.cupcakes.match(/\d+/)?.[0] || "0";
+
+    document.getElementById("details").innerHTML = `
+      <div class="detail-row"><span>Order Number:</span> <strong>${data.order_number}</strong></div>
+      <div class="detail-row"><span>Name:</span> ${data.name}</div>
+      <div class="detail-row"><span>Phone:</span> ${data.phone}</div>
+      <div class="detail-row"><span>Email:</span> ${data.email}</div>
+      <hr>
+      <div class="detail-row"><span>Style:</span> ${data.cake_style}</div>
+      <div class="detail-row"><span>Flavor:</span> ${data.cake_flavor}</div>
+      <div class="detail-row"><span>Size:</span> ${data.cake_size}</div>
+      <div class="detail-row"><span>Shape:</span> ${data.cake_shape}</div>
+      <div class="detail-row"><span>Tiers:</span> ${data.cake_tiers === "1" ? "1 Tier" : data.cake_tiers + " Tiers"}</div>
+      <div class="detail-row"><span>Extra Frosting:</span> ${data.extra_frosting}</div>
+      <div class="detail-row"><span>Message on Cake:</span> "${data.custom_message}"</div>
+      <hr>
+      <div class="detail-row"><span>Cupcake Treat:</span> ${cupcakeCount} cupcakes ${cupcakeCount !== "None" ? `(+R${data.cupcake_price})` : ""}</div>
+      <hr>
+      <div class="detail-row"><span>Delivery Date:</span> ${niceDate}</div>
+      <div class="detail-row"><span>Delivery Address:</span> ${data.delivery_address}</div>
+      <hr>
+      <div class="detail-row" style="font-size:1.7rem;color:#f15a29;">
+        <span>Total Amount:</span> <strong>${data.total}</strong>
+      </div>
+      ${data.image_base64 ? `<img src="${data.image_base64}" class="image-preview" alt="Your reference photo">` : ""}
+    `;
+
+    // Send confirmation email to customer
+    emailjs.send('service_i81t9k7', 'template_customer_confirm', {
+      to_name: data.name,
+      to_email: data.email,
+      order_number: data.order_number,
+      cake_details: `${data.cake_style} - ${data.cake_flavor}`,
+      size_shape: `${data.cake_size} • ${data.cake_shape} • ${data.cake_tiers} tier${data.cake_tiers === "1" ? "" : "s"}`,
+      custom_message: data.custom_message,
+      extra_frosting: data.extra_frosting,
+      cupcakes: cupcakeCount === "None" ? "None" : `${cupcakeCount} cupcakes (+R${data.cupcake_price})`,
+      delivery_date: niceDate,
+      delivery_address: data.delivery_address,
+      total: data.total
+    })
+    .then(() => {
+      document.getElementById("email-status").textContent = "Confirmation email sent successfully!";
+    })
+    .catch((err) => {
+      console.error(err);
+      document.getElementById("email-status").textContent = "Order received! (Email will follow shortly)";
+    });
+
+    // WhatsApp message to admin
+    function sendToWhatsApp() {
+      const adminNumber = "+27606513009"; // Change if needed
+
+      const message = 
+`*NEW CAKE ORDER* 🍰%0A%0A` +
+`*Order:* ${data.order_number}%0A` +
+`*Customer:* ${data.name}%0A` +
+`*Phone:* ${data.phone}%0A` +
+`*Email:* ${data.email}%0A%0A` +
+`*Style:* ${data.cake_style}%0A` +
+`*Flavor:* ${data.cake_flavor}%0A` +
+`*Size:* ${data.cake_size}%0A` +
+`*Shape:* ${data.cake_shape} • ${data.cake_tiers} tier${data.cake_tiers === "1" ? "" : "s"}%0A` +
+`*Message:* "${data.custom_message}"%0A` +
+`*Extra Frosting:* ${data.extra_frosting}%0A` +
+`*Cupcakes:* ${cupcakeCount} ${cupcakeCount !== "None" ? `(+R${data.cupcake_price})` : ""}%0A%0A` +
+`*Delivery:* ${niceDate}%0A` +
+`*Address:* ${data.delivery_address}%0A%0A` +
+`*TOTAL:* ${data.total}`;
+
+      window.open("https://wa.me/" + adminNumber + "?text=" + message, "_blank");
+    }
+  </script>
+</body>
+</html>
