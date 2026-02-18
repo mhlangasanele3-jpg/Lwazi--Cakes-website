@@ -1,5 +1,5 @@
 // Make sure initMap is global so the Google script can find it
-window.initMap = async function() {
+window.initCakesMap = async function() {
   const location = { lat: -25.337376, lng: 31.099743 };
 
   const map = new google.maps.Map(document.getElementById("map"), {
@@ -22,7 +22,7 @@ async function loadGoogleMaps() {
 
     // 2. Load the Google Maps script using the fetched key
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&callback=initMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&callback=initCakesMap`;
     script.async = true;
     script.defer = true;
     document.head.appendChild(script);
