@@ -1,6 +1,6 @@
 // Make sure initMap is global so the Google script can find it
 window.initMap = async function() {
-  const location = { lat: -25.337376, lng: 31.099743 };
+  const location = "https://maps.app.goo.gl/LksR696UBDo2TZ9v8";
 
   const map = new google.maps.Map(document.getElementById("map"), {
     zoom: 17,
